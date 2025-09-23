@@ -1,0 +1,3 @@
+[submodule "multicorn2"]
+	path = multicorn2
+	url = https://github.com/pgsql-io/multicorn2.git
