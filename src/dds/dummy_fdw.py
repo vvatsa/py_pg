@@ -6,10 +6,10 @@ class DummyFDW(ForeignDataWrapper):
         super().__init__(options, columns)
         self.columns = columns
         self.options = options
+        self.num_rows = int(self.options.get('num_rows', 20))
 
     def execute(self, quals, columns):
-        num_rows = int(self.options.get('num_rows', 20))
-        for index in range(num_rows):
+        for index in range(self.num_rows):
             line = {}
             for col_name in self.columns:
               line[col_name] = f"{col_name}_{index}"
