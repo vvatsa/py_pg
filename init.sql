@@ -6,3 +6,16 @@ CREATE FOREIGN TABLE test (
     ) server dummy options(
         num_rows '100'
     );
+
+CREATE SERVER NP_NORMAL FOREIGN DATA WRAPPER multicorn options ( wrapper 'dds.numeric.NpNormal');
+CREATE FOREIGN TABLE np_normal (
+    idx integer,
+    sample numeric,
+    mean integer,
+    std integer,
+    size integer
+) server NP_NORMAL options(
+    mean '0',
+    std '1',
+    size '100'
+);

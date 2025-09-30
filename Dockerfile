@@ -6,13 +6,15 @@ RUN apt -y update && \
 
 
 RUN mkdir /tmp/build
-COPY . /tmp/build/
+COPY multicorn2 /tmp/build/multicorn2
 WORKDIR /tmp/build/multicorn2
 ENV POSTGRES_HOST_AUTH_METHOD=trust
 ENV PYTHON_OVERRIDE=python3.11
 RUN make
 RUN make install
+COPY . /tmp/build
 WORKDIR /tmp/build
 
 RUN python3 -m build -w -n
 RUN pip3 install --break-system-packages dist/*whl
+ADD init.sql /docker-entrypoint-initdb.d/init.sql
