@@ -7,5 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "duckdb>=1.4.0",
     "numpy>=2.3.3",
+    "nvdlib>=0.8.3",
     "pandas>=2.3.2",
+    "requests>=2.32.5",
 ]

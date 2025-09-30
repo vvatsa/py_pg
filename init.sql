@@ -19,3 +19,10 @@ CREATE FOREIGN TABLE np_normal (
     std '1',
     size '100'
 );
+
+CREATE SERVER CVE_DATA FOREIGN DATA WRAPPER multicorn options ( wrapper 'dds.web.CVEData');
+CREATE FOREIGN TABLE cve_data (
+    cve_id character varying,
+    description character varying,
+    score character varying
+) server CVE_DATA;
