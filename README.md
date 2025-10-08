@@ -1,4 +1,4 @@
-# Postgres with Python FWD using Multicorn
+# Postgres with Python FDW using Multicorn
 
 
 ## Dublin Data Science 
