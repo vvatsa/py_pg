@@ -10,5 +10,11 @@ dependencies = [
     "numpy>=2.3.3",
     "nvdlib>=0.8.3",
     "pandas>=2.3.2",
+    "polars>=1.35.2",
+    "psycopg>=3.2.12",
+    "psycopg2-binary>=2.9.11",
+    "pyarrow>=22.0.0",
     "requests>=2.32.5",
+    "sqlalchemy>=2.0.44",
+    "typing-extensions>=4.15.0",
 ]
