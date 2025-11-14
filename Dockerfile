@@ -12,6 +12,12 @@ ENV POSTGRES_HOST_AUTH_METHOD=trust
 ENV PYTHON_OVERRIDE=python3.11
 RUN make
 RUN make install
+
+COPY pgvector /tmp/build/pgvector
+WORKDIR /tmp/build/pgvector
+RUN make
+RUN make install
+
 COPY . /tmp/build
 WORKDIR /tmp/build
 
