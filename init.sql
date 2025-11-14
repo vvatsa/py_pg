@@ -1,3 +1,4 @@
+CREATE EXTENSION vector;
 CREATE EXTENSION multicorn;
 create SERVER dummy FOREIGN DATA WRAPPER multicorn options ( wrapper 'dds.dummy_fdw.DummyFDW');
 CREATE FOREIGN TABLE test (
