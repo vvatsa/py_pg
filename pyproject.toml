@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "duckdb>=1.4.0",
+    "marimo>=0.17.8",
     "numpy>=2.3.3",
     "nvdlib>=0.8.3",
     "pandas>=2.3.2",
