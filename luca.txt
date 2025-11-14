@@ -1,0 +1,14 @@
+
+    Luca Gilli
+
+Build a Tiny Language Model from Scratch
+
+Tiny Language Models (TLMs) represent the next frontier in accessible and efficient AI. While Small Language Models (SLMs) are already proving their ability to rival larger models in targeted applications, TLMs push this boundary even further, offering ultra-compact architectures that can be trained quickly with minimal resources.
+
+In this 2.5-hour hands-on workshop, we’ll dive into the world of Tiny Language Models: models up to 10x smaller than conventional SLMs. Despite their reduced size, TLMs can offer surprising flexibility and enable practical applications such as on-device inference and real-time agent-based simulations. We will make use to Andrej Karpathy's LLM.c repository to gain a practical understanding of the full development pipeline:
+
+- How to curate a dataset suitable for small-scale training
+- Designing and configuring a lightweight GPT architecture
+- Training and evaluating your model in resource-constrained environments
+
+By the end of the workshop, you’ll know how to build your own Tiny Language Model and explored real-world use cases where minimal compute meets maximum utility.

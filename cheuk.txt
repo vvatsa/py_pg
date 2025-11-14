@@ -1,0 +1,28 @@
+
+Cheuk Ting Ho
+
+Story About the Python GIL - its Existence and the Lack Thereof
+
+A lot of you have heard of the famous (or infamous) Python GIL, but do you know why it was there in the first place? And now there exists a no-GIL Python 3.13, what difference does it make without the GIL? Let's find out in this talk.
+
+In this talk, we will start with explaining concurrency in Python, what's under the hood in muti-threading, and the role of the GIL in Python processes. Then, we will discuss what makes free-threaded Python different from the "regular" version with the GIL. After that, we will look into benchmarking and seeing the different first hand and determine which processes benefit the most from free-threading in Python.
+
+## Goal
+To educate Python developers about the multi-threading of Python without the GIL (free-threaded Python). Hopefully ,by having a better understanding, developers can make educated judgements when performing concurrency in Python.
+
+## Target Audience
+Any Python developers who have a basic understanding of software development in Python. Deep knowledge of concurrency in any programming language is not required.
+
+## Outline
+
+- Introduction to concurrency in Python
+- difference between async/away and muti-threading
+- potential issues with muti-threading
+- overcoming such issues with GIL
+- GIL vs no GIL
+- what needs to change
+- what has been done so far in free-threaded Python 3.13
+- Benchmarking
+- checking to see the difference between the default version of Python 3.13 and the free-threaded version of it
+- which processes benefit the most from free-threaded Python
+- Summary
