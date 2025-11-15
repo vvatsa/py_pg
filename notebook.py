@@ -5,6 +5,22 @@ app = marimo.App(width="medium", layout_file="layouts/notebook.slides.json")
 
 
 @app.cell
+def _():
+    import sqlalchemy
+
+    DATABASE_URL = f"postgresql://postgres:@localhost:5432/postgres"
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    return (engine,)
+
+
+@app.cell
+def _():
+    import marimo as mo
+    from pathlib import Path
+    return Path, mo
+
+
+@app.cell
 def _(mo):
     mo.md(f"""
     # An ode to Postgres
@@ -29,7 +45,6 @@ def _(mo):
     * PGVector
     * Usecase Demos
         * API Wrapper
-        * Data Lakes
         * Data Science Libraries
         * AI
     """)
@@ -254,17 +269,241 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
-    # Data Application Platform
-    ## Postgres + __Multicorn__ + Python ecosystem
 
-    Everything is hard until it isn't
-
+    _text = mo.md("""
+    * Everything is hard until it isn't
     * Multicorn
       * C - Shared libraries providing interface between postgres and Python FDW
       * Python package - Base class for the FDW
     * Table storage as a function
+
     """)
+
+    _diag = mo.mermaid("""
+    block
+    columns 1
+      db["Data Tier \n Database/Storage"]
+      blockArrowId4<["&nbsp;&nbsp;&nbsp;"]>(down)
+      block:ID
+        Row[("&nbsp;Row&nbsp;")]
+        JSON[("&nbsp;json&nbsp;")]
+        Fn[("&nbsp;Fn&nbsp;")]
+      end
+      space
+
+      style Fn fill:#969,stroke:#333,stroke-width:4px
+
+    """)
+
+    _title = mo.md("""# Data Application Platform 
+    ##Postgres + __Multicorn__ + Python ecosystem
+    """)
+
+    _body = mo.hstack([_text, _diag], )
+    mo.vstack([_title, _body], align='center')
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    # A most simple Demo
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    from multicorn import ForeignDataWrapper
+
+    class DummyFDW(ForeignDataWrapper):
+
+        def __init__(self, options, columns):
+            super().__init__(options, columns)
+            self.columns = columns
+            self.options = options
+            self.num_rows = int(self.options.get('num_rows', 20))
+
+        def execute(self, quals, columns):
+            for index in range(self.num_rows):
+                line = {}
+                for col_name in self.columns:
+                  line[col_name] = f"{col_name}_{index}"
+                yield line
+    mo.show_code()
+    return (ForeignDataWrapper,)
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    <pre>
+    CREATE EXTENSION multicorn;
+    create SERVER dummy FOREIGN DATA WRAPPER multicorn options ( wrapper 'DummyFDW');
+    CREATE FOREIGN TABLE test (
+        test character varying,
+        test2 character varying
+        ) server dummy options(
+            num_rows '100'
+        );
+    </pre>
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    select * from test;
+    """)
+    return
+
+
+@app.cell
+def _(engine, mo, test):
+    _df = mo.sql(
+        f"""
+        select * from test;
+        """,
+        engine=engine
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    # select * from internet
+    """)
+    return
+
+
+@app.cell
+def _(ForeignDataWrapper, datetime, mo, nvdlib, timedelta):
+
+    def get_recent_cves(days=2):
+        # Get the current date and time
+        now = datetime.now()
+        days_ago = now - timedelta(days=days)
+
+        cves = nvdlib.searchCVE(pubStartDate=days_ago, pubEndDate=now, cvssV3Severity='CRITICAL')
+        return [(cve.id, _description(cve), _cvss_score(cve)) for cve in cves]
+
+
+    class CVEData(ForeignDataWrapper):
+        def __init__(self, options, columns):
+            super().__init__(options, columns)
+
+        def execute(self, quals, columns):
+            cves = get_recent_cves()
+            return cves
+    mo.show_code()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    <pre>
+    CREATE SERVER CVE_DATA FOREIGN DATA WRAPPER multicorn options ( wrapper 'CVEData');
+    CREATE FOREIGN TABLE cve_data (
+        cve_id character varying,
+        description character varying,
+        score character varying
+    ) server CVE_DATA;
+    </pre>
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    select * from cve_data
+    """)
+    return
+
+
+@app.cell
+def _(cve_data, engine, mo):
+    _df = mo.sql(
+        f"""
+        select * from cve_data
+        """,
+        engine=engine
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    # select * from numpy
+    """)
+    return
+
+
+@app.cell
+def _(ForeignDataWrapper, INFO, log_to_postgres, mo, np):
+    class NpNormal(ForeignDataWrapper):
+        def __init__(self, options, columns):
+            super().__init__(options, columns)
+            self.mean = int(options.get('mean', 0))
+            self.std = int(options.get('std', 1))
+            self.size = int(options.get('size', 100))
+
+        def _quals_to_dict(self, quals):
+            return {qual.field_name: int(qual.value) for qual in quals if qual.operator == '='}
+
+        def execute(self, quals, columns):
+            _quals_dict = self._quals_to_dict(quals)
+            mean = _quals_dict.get('mean', self.mean)
+            std = _quals_dict.get('std', self.std)
+            size = _quals_dict.get('size', self.size)
+            log_to_postgres(f"Executing NpNormal with mean={mean}, std={std}, size={size}", level=INFO)
+            for idx, smpl in enumerate(np.random.normal(loc=mean, scale=std, size=size)):
+                yield idx, smpl, mean, std, size
+    mo.show_code()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    <pre>
+    CREATE SERVER NP_NORMAL FOREIGN DATA WRAPPER multicorn options ( wrapper 'NpNormal');
+    CREATE FOREIGN TABLE np_normal (
+        idx integer,
+        sample numeric,
+        mean integer,
+        std integer,
+        size integer
+    ) server NP_NORMAL options(
+        mean '0',
+        std '1',
+        size '100'
+    );
+    </pre>
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    select * from np_normal where size = '1000' and mean=2;
+    """)
+    return
+
+
+@app.cell
+def _(engine, mo, np_normal):
+    _df = mo.sql(
+        f"""
+        select * from np_normal where size = '1000' and mean=2;
+        """,
+        engine=engine
+    )
     return
 
 
@@ -283,37 +522,57 @@ def _(engine, mo):
 
 
 @app.cell
-def _():
-    import sqlalchemy
+def _(mo):
+    mo.md("""
+    # Multicorn
 
-    DATABASE_URL = f"postgresql://postgres:@localhost:5432/postgres"
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    return (engine,)
+    ## SQL operations supported by Multicorn
+
+    * def execute(self, quals, columns, sortkeys=None, limit=None, offset=None):
+    * def insert(self, values):
+    * def update(self, oldvalues, newvalues):
+    * def delete(self, oldvalues):
 
 
-@app.cell
-def _(engine, mo, np_normal):
-    _df = mo.sql(
-        f"""
-        Select
-            *
-        from
-            np_normal where mean=5 and size=1000;
-        """,
-        engine=engine
-    )
+    ## Tables are just functions, we can create FDW in a few lines of python.
+    """)
     return
 
 
 @app.cell
-def _():
-    import marimo as mo
-    from pathlib import Path
-    return Path, mo
+def _(Path, mo):
+    _img = mo.image(Path("public/kent-brockman-insect-overlords.gif"), rounded=True, width=400, height=300)
+    mo.md(f"""
+    # I for one welcome our robot overlords
+
+    {_img}
+
+    """)
+    return
 
 
 @app.cell
-def _():
+def _(mo):
+    mo.md("""
+    # PGVector
+    ## Open-source vector similarity search for Postgres
+
+    ## Distance search
+
+    *    <-> - L2 distance
+    *    <#> - (negative) inner product
+    *    <=> - cosine distance
+    *    <+> - L1 distance
+    *    <~> - Hamming distance (binary vectors)
+    *    <%> - Jaccard distance (binary vectors)
+
+    # Plus all of the other great features of Postgres
+    """)
+    return
+
+
+@app.cell
+def _(mo):
     from langchain_ollama import OllamaEmbeddings, OllamaLLM
     from langchain_postgres import PGVector
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -329,43 +588,62 @@ def _():
         connection="postgresql+psycopg://postgres@localhost:5432/postgres", 
         collection_name="py_con_irl"
     )
+    mo.show_code()
     return llm, vectorstore
 
 
 @app.cell
-def _(vectorstore):
+def _(mo, vectorstore):
+    # Load data into vector db
     for f_name in ["cheuk.txt", "luca.txt"]:
         with open(f_name, 'r') as fd:
             _data = fd.read()
         vectorstore.add_texts(texts=[_data])
+    mo.show_code()
     return
 
 
 @app.cell
-def _(llm, vectorstore):
-    # Use the vectorstore as a retriever
+def _(llm, mo, vectorstore):
     retriever = vectorstore.as_retriever()
 
-    # Retrieve the most similar text
-    retrieved_documents = retriever.invoke("cheuk ")
+    retrieved_documents = retriever.invoke("Python Talks")
+
     ai_resp = llm.invoke(f"""
-    FROM: {retrieved_documents[0]}
+    FROM: {retrieved_documents}
 
     What is in the document
     """)
     print(ai_resp)
-    return retrieved_documents, retriever
-
-
-@app.cell
-def _(retrieved_documents):
-    retrieved_documents
+    mo.show_code()
     return
 
 
 @app.cell
-def _(retriever):
-    retriever.invoke("cheuk")
+def _(mo):
+    mo.md(r"""
+    The document contains two talks:
+
+    **Talk 1: "Story About the Python GIL - its Existence and the Lack Thereof"**
+
+    * Title: Cheuk Ting Ho
+    * Summary: A talk about the Global Interpreter Lock (GIL) in Python, including:
+    + Concurrency in Python
+    + Multi-threading under the hood
+    + The role of the GIL in Python processes
+    + Differences between free-threaded Python 3.13 and regular Python with the GIL
+    + Benchmarking and comparing performance benefits
+
+    **Talk 2: "Build a Tiny Language Model from Scratch"**
+
+    * Title: Luca Gilli
+    * Summary: A hands-on workshop on building a Tiny Language Model (TLM) using Andrej Karpathy's LLM.c repository. The workshop covers:
+    + Curation of a dataset for small-scale training
+    + Designing and configuring a lightweight GPT architecture
+    + Training and evaluating the model in resource-constrained environments
+
+    Both talks are aimed at Python developers with a basic understanding of software development, and no prior knowledge of concurrency or language models is required.
+    """)
     return
 
 
@@ -377,6 +655,19 @@ def _(engine, langchain_pg_embedding, mo):
         """,
         engine=engine
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    # And other crazy things.... Postgres in your browser
+    # PGlite
+    ## WASM build of Postgres
+    * Persistence in your browser
+    * extentions support
+     * PGVector...
+    """)
     return
 
 
